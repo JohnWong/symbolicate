@@ -1,5 +1,7 @@
 #!/bin/bash
 
+IFS=$'\n'
+
 ARGS=("$@")
 
 XCODE_DIR="/Applications/Xcode.app"
@@ -7,10 +9,11 @@ export DEVELOPER_DIR="${XCODE_DIR}/Contents/Developer"
 
 XCODE_VERSION=$(defaults read /Applications/Xcode.app/Contents/version.plist CFBundleShortVersionString)
 
-if [ ${XCODE_VERSION:0:1} == "5" ]; then
-	CRASH="${DEVELOPER_DIR}/Platforms/iPhoneOS.platform/Developer/Library/PrivateFrameworks/DTDeviceKitBase.framework/Versions/Current/Resources/symbolicatecrash"
-else
+if [ ${XCODE_VERSION:0:1} == "6" ]; then
 	CRASH="${XCODE_DIR}/Contents/SharedFrameworks/DTDeviceKitBase.framework/Versions/Current/Resources/symbolicatecrash"
+else
+	# test work on xcode7-8
+	CRASH="${XCODE_DIR}/Contents/SharedFrameworks/DVTFoundation.framework/Versions/A/Resources/symbolicatecrash"
 fi
 
 function checkUUIDAndExec()
@@ -50,7 +53,7 @@ function checkUUIDAndExec()
 			continue
 		else
 			# Execute if lowercase UUID is found in crash log
-			UUID=$(echo "${i//-/}" | tr 'A-F' 'a-f')
+			UUID=$(echo "${i//-/}" | tr 'A-F' 'a-f' | awk '{print $2}')
 			if [[ $(grep "$UUID" "$LOG_PATH") ]]; then
 				$CRASH -v $ARGS
 				break
